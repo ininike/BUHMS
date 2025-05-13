@@ -20,7 +20,7 @@ class Hostel (SQLModel, table=True):
     name: str
     
     admin: "HallAdmin" = Relationship(back_populates="hostel")
-    porters: List["HallAdmin"] = Relationship(back_populates="hostel")
+    porters: List["HallPorter"] = Relationship(back_populates="hostel")
     rooms: List["Room"] = Relationship(back_populates="hostel")
     session_students: List["HostelStudent"] = Relationship(back_populates="hostel")
     
@@ -61,9 +61,6 @@ class Room (SQLModel, table=True):
     
 class AcademicSession (SQLModel, table=True):
     __tablename__ = "academic_sessions"
-    model_config = {
-       "arbitrary_types_allowed": True
-    }
     
     id: Optional[int] = Field(default=None, primary_key=True)
     session_name: str
@@ -91,8 +88,3 @@ class HostelStudent (SQLModel, table=True):
     student: Student = Relationship(back_populates="session_hostel")
     room: Optional[Room] = Relationship(back_populates="session_students")
     current_session: AcademicSession = Relationship(back_populates="hostel_students")
-    
-    
-class Token(SQLModel):
-    access_token: str
-    refresh_token: str
