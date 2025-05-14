@@ -27,7 +27,6 @@ app.add_middleware(
 
 class Settings(SQLModel):
     authjwt_secret_key: str = environ.get("JWT_KEY")
-    authjwt_access_cookie_key: str = environ.get("ACCESS_COOKIE_KEY")
     authjwt_token_location: set = {"cookies"}
     authjwt_cookie_secure: bool = True
     authjwt_cookie_csrf_protect: bool = True
@@ -48,8 +47,6 @@ def authjwt_exception_handler(request: Request, exc: AuthJWTException):
 
 @app.exception_handler(Exception)
 def general_exception_handler(request: Request, exc: Exception):
-    with open("error_log.txt", "a") as f:
-        f.write(f"Error: {exc}\n")
     return JSONResponse(
         status_code=500,
         content={"detail": "An unexpected error occurred."}

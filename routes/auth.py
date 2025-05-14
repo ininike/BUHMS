@@ -1,5 +1,8 @@
-from fastapi import APIRouter, HTTPException, status, Depends
-from models import Student, HallPorter, HallAdmin
+from fastapi import APIRouter, HTTPException, status, Depends, Response
+from fastapi.responses import JSONResponse
+from models.database_models import Student, HallPorter, HallAdmin, HostelStudent
+from models.auth import LoginResponse
+from models.response import ResponseData
 from fastapi_jwt_auth import AuthJWT
 from sqlmodel import select 
 from dependencies.db import db_dependency
@@ -13,14 +16,13 @@ router = APIRouter(
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def has_registered(student: Student) -> int | None:
+def has_registered(student: Student) -> HostelStudent | None:
     """Check if a student has paid of a hostel this semester"""
     for session_hostel in student.session_hostel:
         if session_hostel.has_checked_out == True:
             continue
-        
-        return session_hostel.id
-
+        return session_hostel
+    
 def verify_login (username: str, password: str, db, user_type: str):
     if user_type == 'student':
         user = db.exec(select(Student).where(Student.matric_no == username)).first()
@@ -30,44 +32,53 @@ def verify_login (username: str, password: str, db, user_type: str):
         user = db.exec(select(HallAdmin).where(HallAdmin.email == username)).first()
     
     if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Incorrect credentials')
+        return None
     
     # valid = pwd_context.verify(password, user.password)
     valid = True
     if not valid:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Incorrect username/password')
+        return None
     
     return user
     
-@router.post("/student-login", status_code=status.HTTP_200_OK, description="authenticate a student and return an access token")
+@router.post("/student-login", status_code=status.HTTP_200_OK, description="authenticate a student and return an access token", response_model=LoginResponse)
 async def login(input: login_form_dependency, db: db_dependency, Authorize: AuthJWT = Depends()):
     student = verify_login(input.username, input.password, db, 'student')
-    hostel_student_id = has_registered(student)
-    if not hostel_student_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail={'message': 'You have not registered for a hostel this semester', 'isPaid':bool(hostel_student_id)})
-    access_token = Authorize.create_access_token(subject=hostel_student_id, user_claims={'user_type': 'student'})
-    Authorize.set_access_cookies(access_token)
-    return {"message": "Log in successful"}
+    if student is None:
+        return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"message": "Invalid username or password"})
+    student_hostel = has_registered(student)
+    if student_hostel:
+        access_token = Authorize.create_access_token(subject=student_hostel.id, user_claims={'user_type': 'student'})
+        Authorize.set_access_cookies(access_token)
+    return LoginResponse(
+        message="Log in successful",
+        hasRoom=bool(student_hostel.room_id),
+        isPaid=bool(student_hostel)
+    )
 
-@router.post("/porter-login", status_code=status.HTTP_200_OK, description="authenticate a porter and return an access token")
+@router.post("/porter-login", status_code=status.HTTP_200_OK, description="authenticate a porter and return an access token", response_model=ResponseData)
 async def login(input: login_form_dependency, db: db_dependency, Authorize: AuthJWT = Depends()):
     porter = verify_login(input.username, input.password, db, 'porter')
+    if porter is None:
+        return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"message": "Invalid username or password"})
     access_token = Authorize.create_access_token(subject=porter.id, user_claims={'user_type': 'porter'})
     Authorize.set_access_cookies(access_token)
-    return {"message": "Log in successful"}
+    return ResponseData(message="Login successful")
 
-@router.post("/admin-login", status_code=status.HTTP_200_OK, description="authenticate an admin and return an access token")
+@router.post("/admin-login", status_code=status.HTTP_200_OK, description="authenticate an admin and return an access token", response_model=ResponseData)
 async def login(input: login_form_dependency, db: db_dependency, Authorize: AuthJWT = Depends()):
     admin = verify_login(input.username, input.password, db, 'admin')
+    if admin is None:
+        return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"message": "Invalid username or password"})
     access_token = Authorize.create_access_token(subject=admin.id, user_claims={'user_type': 'admin'})
     Authorize.set_access_cookies(access_token)
-    return {"message": "Log in successful"}
+    return ResponseData(message="Login successful")
 
-@router.post("/logout", status_code=status.HTTP_200_OK, description="logout a user")
-async def logout(Authorize: AuthJWT = Depends()):
+@router.post("/logout", status_code=status.HTTP_200_OK, description="logout a user", response_model=ResponseData)
+async def logout( response: Response, Authorize: AuthJWT = Depends()):
     Authorize.jwt_required()
-    Authorize.unset_jwt_cookies()
-    return {"message": "Logged out successfully"}
+    Authorize.unset_jwt_cookies(response)
+    return ResponseData(message="Logout successful")
 
     
 

@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer,OAuth2PasswordRequestForm
 from fastapi_jwt_auth import AuthJWT
-from models import HostelStudent, HallPorter, HallAdmin
+from models.database_models import HostelStudent, HallPorter, HallAdmin
 from typing import Annotated
 from .db import db_dependency
 from dotenv import load_dotenv
