@@ -7,7 +7,7 @@ from os import environ
 from datetime import timedelta
 from sqlmodel import SQLModel
 from dotenv import load_dotenv
-from routes import auth
+from routes import auth, test, rooms, students
 from redis import Redis
 
 load_dotenv()
@@ -53,3 +53,6 @@ def general_exception_handler(request: Request, exc: Exception):
     )
     
 app.include_router(auth.router)
+app.include_router(test.router)
+app.include_router(rooms.router)
+app.include_router(students.router)

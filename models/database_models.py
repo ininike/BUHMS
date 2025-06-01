@@ -88,3 +88,17 @@ class HostelStudent (SQLModel, table=True):
     student: Student = Relationship(back_populates="session_hostel")
     room: Optional[Room] = Relationship(back_populates="session_students")
     current_session: AcademicSession = Relationship(back_populates="hostel_students")
+    
+class Devices(SQLModel, table=True):
+    __tablename__ = "devices"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    type: str
+    name: str
+    photo: str
+    color: str
+    bar_code: str
+    receipt_confirmed: bool = Field(default=False)
+    date_received: Optional[datetime]
+    date_removed: Optional[datetime]
+    room_student_id: int = Field(foreign_key="hostels_students.id")

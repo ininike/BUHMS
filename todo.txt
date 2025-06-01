@@ -1,0 +1,4 @@
+>add incorrect password checking
+>remove room_id from the token and change where its used
+>put the routes properly where they are supposed to be
+>test endpoints

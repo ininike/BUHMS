@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Response
 from fastapi.responses import JSONResponse
-from models.database_models import Student, HallPorter, HallAdmin, HostelStudent
+from models.database_models import Student, HallPorter, HallAdmin, HostelStudent, AcademicSession
 from models.auth import LoginResponse
 from models.response import ResponseData
 from fastapi_jwt_auth import AuthJWT
@@ -34,12 +34,14 @@ def verify_login (username: str, password: str, db, user_type: str):
     if user is None:
         return None
     
-    # valid = pwd_context.verify(password, user.password)
-    valid = True
+    valid = password == user.password
     if not valid:
         return None
-    
     return user
+
+def get_current_semester(db):
+    """Get the current academic session"""
+    return db.exec(select(AcademicSession).where(AcademicSession.is_current == True)).first()
     
 @router.post("/student-login", status_code=status.HTTP_200_OK, description="authenticate a student and return an access token", response_model=LoginResponse)
 async def login(input: login_form_dependency, db: db_dependency, Authorize: AuthJWT = Depends()):
@@ -48,7 +50,11 @@ async def login(input: login_form_dependency, db: db_dependency, Authorize: Auth
         return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"message": "Invalid username or password"})
     student_hostel = has_registered(student)
     if student_hostel:
-        access_token = Authorize.create_access_token(subject=student_hostel.id, user_claims={'user_type': 'student'})
+        access_token = Authorize.create_access_token(subject=student_hostel.id, user_claims={
+                'user_type': 'student',
+                'hostel_id': student_hostel.hostel_id,
+                'current_semester': get_current_semester(db).id,
+            })
         Authorize.set_access_cookies(access_token)
     return LoginResponse(
         message="Log in successful",
