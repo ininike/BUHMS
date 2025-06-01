@@ -11,7 +11,7 @@ class Student (SQLModel, table=True):
     matric_no: str
     password: str
     
-    session_hostel: List["HostelStudent"] = Relationship(back_populates="student")
+    semester_hostels: List["HostelStudent"] = Relationship(back_populates="student")
     
 class Hostel (SQLModel, table=True):
     __tablename__ = "hostels"
@@ -22,7 +22,7 @@ class Hostel (SQLModel, table=True):
     admin: "HallAdmin" = Relationship(back_populates="hostel")
     porters: List["HallPorter"] = Relationship(back_populates="hostel")
     rooms: List["Room"] = Relationship(back_populates="hostel")
-    session_students: List["HostelStudent"] = Relationship(back_populates="hostel")
+    semester_students: List["HostelStudent"] = Relationship(back_populates="hostel")
     
 class HallPorter (SQLModel, table=True):
     __tablename__ = "admins"
@@ -57,18 +57,18 @@ class Room (SQLModel, table=True):
     max_space: int
     
     hostel: Hostel = Relationship(back_populates="rooms")
-    session_students: List["HostelStudent"] = Relationship(back_populates="room")
+    semester_students: List["HostelStudent"] = Relationship(back_populates="room")
     
-class AcademicSession (SQLModel, table=True):
-    __tablename__ = "academic_sessions"
+class Academicsemester (SQLModel, table=True):
+    __tablename__ = "academic_semesters"
     
     id: Optional[int] = Field(default=None, primary_key=True)
-    session_name: str
+    semester_name: str
     registration_start_date: datetime
     semester_end_date: Optional[datetime]
     is_current: bool = Field(default=False)   
     
-    hostel_students: List["HostelStudent"] = Relationship(back_populates="current_session")
+    hostel_students: List["HostelStudent"] = Relationship(back_populates="current_semester")
     
 class HostelStudent (SQLModel, table=True):
     __tablename__ = "hostels_students"
@@ -76,7 +76,7 @@ class HostelStudent (SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     room_id: Optional[int] = Field(default=None, foreign_key="rooms.id")
     student_id: int = Field(foreign_key="students.id")
-    academic_session_id: int = Field(foreign_key="academic_sessions.id")
+    academic_semester_id: int = Field(foreign_key="academic_semesters.id")
     has_checked_in: bool = Field(default=False)
     has_checked_out: bool = Field(default=False)
     hostel_id: int = Field(foreign_key="hostels.id")
@@ -84,10 +84,10 @@ class HostelStudent (SQLModel, table=True):
     time_checked_in: Optional[datetime]
     time_checked_out: Optional[datetime]
     
-    hostel: Hostel = Relationship(back_populates="session_students")
-    student: Student = Relationship(back_populates="session_hostel")
-    room: Optional[Room] = Relationship(back_populates="session_students")
-    current_session: AcademicSession = Relationship(back_populates="hostel_students")
+    hostel: Hostel = Relationship(back_populates="semester_students")
+    student: Student = Relationship(back_populates="semester_hostel")
+    room: Optional[Room] = Relationship(back_populates="semester_students")
+    current_semester: Academicsemester = Relationship(back_populates="hostel_students")
     
 class Devices(SQLModel, table=True):
     __tablename__ = "devices"
@@ -102,3 +102,5 @@ class Devices(SQLModel, table=True):
     date_received: Optional[datetime]
     date_removed: Optional[datetime]
     room_student_id: int = Field(foreign_key="hostels_students.id")
+    
+    student: Student = Relationship(back_populates="semester_devices")
