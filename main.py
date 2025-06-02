@@ -7,7 +7,7 @@ from os import environ
 from datetime import timedelta
 from sqlmodel import SQLModel
 from dotenv import load_dotenv
-from routes import auth, test, rooms, students
+from routes import auth, test, rooms, students, devices
 from redis import Redis
 
 load_dotenv()
@@ -42,17 +42,18 @@ def get_config():
 def authjwt_exception_handler(request: Request, exc: AuthJWTException):
     return JSONResponse(
         status_code=exc.status_code,
-        content={"detail": exc.message}
+        content={"message": exc.message}
     )
 
 @app.exception_handler(Exception)
 def general_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=500,
-        content={"detail": "An unexpected error occurred."}
+        content={"message": "An unexpected error occurred."}
     )
     
 app.include_router(auth.router)
 app.include_router(test.router)
 app.include_router(rooms.router)
 app.include_router(students.router)
+app.include_router(devices.router)

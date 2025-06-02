@@ -1,4 +1,5 @@
-from fastapi import HTTPException, status, Depends
+from fastapi import status, Depends
+from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer,OAuth2PasswordRequestForm
 from fastapi_jwt_auth import AuthJWT
 from models.database_models import HostelStudent, HallPorter, HallAdmin
@@ -15,7 +16,7 @@ token_dependency = Annotated[str, Depends(reusable_oauth2)]
 def authenticate_user(Authorize: AuthJWT = Depends(), user_type: str = None):
     Authorize.jwt_required()
     if Authorize.get_raw_jwt()['user_type'] != user_type:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Access Denied')
+        return JSONResponse(status_code=status.HTTP_403_FORBIDDEN, content={ "message": "Access denied" })
     user_id: int = Authorize.get_jwt_subject()
     return user_id
 
@@ -28,7 +29,7 @@ def validate_user(user_id: int, db: db_dependency, user_type: str):
         user = db.get(HallAdmin, user_id)
     
     if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Unable to validate credentials')
+        return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={ "message": "Unable to validate credentials" })
     
     return user
 

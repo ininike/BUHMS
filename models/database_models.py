@@ -23,6 +23,7 @@ class Hostel (SQLModel, table=True):
     porters: List["HallPorter"] = Relationship(back_populates="hostel")
     rooms: List["Room"] = Relationship(back_populates="hostel")
     semester_students: List["HostelStudent"] = Relationship(back_populates="hostel")
+    announcements: List["Announcement"] = Relationship(back_populates="hostel")
     
 class HallPorter (SQLModel, table=True):
     __tablename__ = "admins"
@@ -59,7 +60,7 @@ class Room (SQLModel, table=True):
     hostel: Hostel = Relationship(back_populates="rooms")
     semester_students: List["HostelStudent"] = Relationship(back_populates="room")
     
-class Academicsemester (SQLModel, table=True):
+class AcademicSemester (SQLModel, table=True):
     __tablename__ = "academic_semesters"
     
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -68,7 +69,8 @@ class Academicsemester (SQLModel, table=True):
     semester_end_date: Optional[datetime]
     is_current: bool = Field(default=False)   
     
-    hostel_students: List["HostelStudent"] = Relationship(back_populates="current_semester")
+    hostel_students: List["HostelStudent"] = Relationship(back_populates="semester")
+    announcements: List["Announcement"] = Relationship(back_populates="semester")
     
 class HostelStudent (SQLModel, table=True):
     __tablename__ = "hostels_students"
@@ -87,20 +89,36 @@ class HostelStudent (SQLModel, table=True):
     hostel: Hostel = Relationship(back_populates="semester_students")
     student: Student = Relationship(back_populates="semester_hostel")
     room: Optional[Room] = Relationship(back_populates="semester_students")
-    current_semester: Academicsemester = Relationship(back_populates="hostel_students")
+    semester: AcademicSemester = Relationship(back_populates="hostel_students")
+    semester_devices: List["Device"] = Relationship(back_populates="student")
     
-class Devices(SQLModel, table=True):
+class Device(SQLModel, table=True):
     __tablename__ = "devices"
 
     id: Optional[int] = Field(default=None, primary_key=True)
     type: str
     name: str
-    photo: str
+    photo: Optional[str]
     color: str
-    bar_code: str
+    unique_code: str
     receipt_confirmed: bool = Field(default=False)
     date_received: Optional[datetime]
     date_removed: Optional[datetime]
     room_student_id: int = Field(foreign_key="hostels_students.id")
     
     student: Student = Relationship(back_populates="semester_devices")
+    
+class Announcement(SQLModel, table=True):
+    __tablename__ = "announcements"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    title: Optional[str]
+    content: str
+    time_created: datetime
+    admin_id: str
+    hostel_id: int = Field(foreign_key="hostels.id")
+    academic_semester_id: int = Field(foreign_key="academic_semesters.id")
+    has_read: bool = Field(default=False)
+    
+    hostel: Hostel = Relationship(back_populates="announcements")
+    semester: AcademicSemester = Relationship(back_populates="announcements")

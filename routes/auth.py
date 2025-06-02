@@ -1,6 +1,6 @@
-from fastapi import APIRouter, HTTPException, status, Depends, Response
+from fastapi import APIRouter, status, Depends, Response
 from fastapi.responses import JSONResponse
-from models.database_models import Student, HallPorter, HallAdmin, HostelStudent, AcademicSession
+from models.database_models import Student, HallPorter, HallAdmin, HostelStudent, AcademicSemester
 from models.auth import LoginResponse
 from models.response import ResponseData
 from fastapi_jwt_auth import AuthJWT
@@ -41,7 +41,7 @@ def verify_login (username: str, password: str, db, user_type: str):
 
 def get_current_semester(db):
     """Get the current academic session"""
-    return db.exec(select(AcademicSession).where(AcademicSession.is_current == True)).first()
+    return db.exec(select(AcademicSemester).where(AcademicSemester.is_current == True)).first()
     
 @router.post("/student-login", status_code=status.HTTP_200_OK, description="authenticate a student and return an access token", response_model=LoginResponse)
 async def login(input: login_form_dependency, db: db_dependency, Authorize: AuthJWT = Depends()):
