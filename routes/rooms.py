@@ -12,7 +12,7 @@ router = APIRouter(
     prefix="/rooms"
 )
 
-def get_rooms(db, hostel_id: int, user_type: str, student_id: int) -> list:
+def fetch_rooms(db, hostel_id: int, user_type: str, student_id: int) -> list:
     """Get all rooms in a hostel"""
     rooms = db.exec(select(Room).where(Room.hostel_id == hostel_id)).all()
     if user_type == 'student':
@@ -29,10 +29,9 @@ def get_rooms(db, hostel_id: int, user_type: str, student_id: int) -> list:
 @router.get("/", status_code=200, description="Get all rooms in a hostel")
 async def get_rooms(db: db_dependency, Authorize: AuthJWT = Depends()):
     Authorize.jwt_required()
-    db.exec()
     user_claims = Authorize.get_raw_jwt()
     user_id =  Authorize.get_jwt_subject()
-    rooms = get_rooms(db, user_claims['hostel_id'], user_claims['user_type'], user_id)
+    rooms = fetch_rooms(db, user_claims['hostel_id'], user_claims['user_type'], user_id)
     return ResponseData(
         message="Rooms fetched successfully",
         status_code=200,

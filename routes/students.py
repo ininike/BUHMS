@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from fastapi_jwt_auth import AuthJWT
 from models.response import ResponseData
-from models.input import SelectRoomInput, AddDeviceInput, ReadAnnouncementInput
+from models.input import SelectRoomInput, AddDeviceInput, ReadAnnouncementInput, MakeComplaintInput
 from sqlmodel import select
 from dependencies.db import db_dependency
 from dependencies.auth import current_student_dependency
-from models.database_models import Student, Hostel, HallPorter, HallAdmin, HostelStudent, Room, Device, Announcement
+from models.database_models import Student, Hostel, HallPorter, HallAdmin, HostelStudent, Room, Device, Announcement, Complaint
 from datetime import datetime
 
 router = APIRouter(
@@ -83,5 +83,18 @@ async def read_announcement(input: ReadAnnouncementInput, db:db_dependency, curr
         message="Annoucement read successfully",
     )
     
-
+@router.post("/make-complaint", status_code=200, description="Make a complaint to the hall admin")
+async def make_complaint(input: MakeComplaintInput, db: db_dependency, current_student: current_student_dependency):
+    complaint = Complaint(hostel_student_id=current_student.id, content=input.content)
+    db.add(complaint)
+    db.commit()
+    return ResponseData(
+        message="Complaint made successfully" 
+    )
     
+@router.get("/complaints", status_code=200, description="View complaints")
+async def get_complaints(db: db_dependency, current_student: current_student_dependency):
+    complaints = db.exec(select(Complaint).where(Complaint.hostel_student_id == current_student.id)).all()
+    return ResponseData(
+       message="Student complaints fetched successfully" 
+    )

@@ -13,3 +13,7 @@ class AddDeviceInput(SQLModel):
     
 class ReadAnnouncementInput(SQLModel):
     announcement_id: int
+    
+class MakeComplaintInput(SQLModel):
+    content: str
+    
