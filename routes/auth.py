@@ -65,7 +65,10 @@ async def login(input: login_form_dependency, db: db_dependency, Authorize: Auth
     admin = verify_login(input.username, input.password, db, 'admin')
     if admin is None:
         return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"message": "Invalid username or password"})
-    access_token = Authorize.create_access_token(subject=admin.id, user_claims={'user_type': admin.type })
+    access_token = Authorize.create_access_token(subject=admin.id, user_claims={
+            'user_type': admin.type,
+            'hostel_id': admin
+        })
     Authorize.set_access_cookies(access_token)
     return ResponseData(message="Login successful")
 

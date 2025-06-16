@@ -41,6 +41,11 @@ async def get_rooms(db: db_dependency, Authorize: AuthJWT = Depends()):
 @router.get("/{room_id}", status_code=200, description="Get all students in a room")
 async def get_room_students(room_id: int, db: db_dependency, Authorize: AuthJWT = Depends()):
     Authorize.jwt_required()
+    room = db.get(Room, room_id)
+    if room is None:
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": "Room not found"})
+    if room.hostel_id != Authorize.get_raw_jwt()['hostel_id']:
+        return JSONResponse(status_code=status.HTTP_403_FORBIDDEN, content={"message": "You do not have access to this room"})
     rooms_students = db.exec(select(HostelStudent).where(HostelStudent.room_id == room_id and HostelStudent.has_checked_out == False)).all()
     return ResponseData(
         message="Rooms fetched successfully",
