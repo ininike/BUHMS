@@ -18,10 +18,10 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def has_registered(student: Student) -> HostelStudent | None:
     """Check if a student has paid of a hostel this semester"""
-    for session_hostel in student.session_hostel:
-        if session_hostel.has_checked_out == True:
+    for semester_hostel in student.semester_hostels:
+        if semester_hostel.has_checked_out == True:
             continue
-        return session_hostel
+        return semester_hostel
     
 def verify_login (username: str, password: str, db, user_type: str):
     if user_type == 'student':

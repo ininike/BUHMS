@@ -20,7 +20,7 @@ async def change_room(input: SelectRoomInput, db: db_dependency, current_student
         return JSONResponse(status_code=status.HTTP_403_FORBIDDEN, content={"message": "Contact the Hall Admin to change your room after you have checked in."})
     current_student.room_id = input.room_id
     db.add(current_student)
-    db.commit(current_student)
+    db.commit()
     return ResponseData(
         message="Room updated successfully",
     )
@@ -30,7 +30,7 @@ async def get_student_devices(db: db_dependency, current_student: current_studen
     devices = db.exec(select(Device).where(Device.room_student_id == current_student.id)).all()
     return ResponseData(
         message="Successfully retrieved student devices",
-        data=devices
+        data={"devices": devices}
     )
 
 @router.post("/register-device", status_code=201, description="Register a new device for a student")
@@ -42,14 +42,20 @@ async def register_device(input: AddDeviceInput, db: db_dependency, current_stud
         message="Device registered successfully",
     )
     
-@router.delete("/remove-device/{device_id}", status_code=200, description="Remove a device (set date_collected to now)")
+@router.delete("/remove-device/{device_id}", status_code=200, description="Remove a device (set date_removed to now)")
 async def remove_device(device_id: int, db: db_dependency, current_student: current_student_dependency):
     device: Device = db.get(Device, device_id)
     if not device:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": "Device not found"})
-    device.date_removed = datetime.now()
-    db.add(device)
-    db.commit()
+    if device.room_student_id != current_student.id:
+        return JSONResponse(status_code=status.HTTP_403_FORBIDDEN, content={"message": "You do not have permission to remove this device"})
+    if not device.receipt_confirmed:
+        db.delete(device)
+        db.commit()
+    else:
+        device.date_removed = datetime.now()
+        db.add(device)
+        db.commit()
     return ResponseData(
         message="Device removed successfully",
     )
@@ -71,17 +77,17 @@ async def get_announcements(db: db_dependency, current_student: current_student_
         data={"announcements": announcements}
     )
 
-@router.post("/read-announcement", status_code=200, description="Mark an annoucements as read")
-async def read_announcement(input: ReadAnnouncementInput, db:db_dependency, current_student: current_student_dependency):
-    announcement = db.get(Announcement, input.announcement_id)
-    if not announcement:
-        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": "Announcement not found"})
-    announcement.has_read = True
-    db.add(announcement)
-    db.commit()
-    return ResponseData(
-        message="Annoucement read successfully",
-    )
+# @router.post("/read-announcement", status_code=200, description="Mark an annoucements as read")
+# async def read_announcement(input: ReadAnnouncementInput, db:db_dependency, current_student: current_student_dependency):
+#     announcement = db.get(Announcement, input.announcement_id)
+#     if not announcement:
+#         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": "Announcement not found"})
+#     announcement.has_read = True
+#     db.add(announcement)
+#     db.commit()
+#     return ResponseData(
+#         message="Annoucement read successfully",
+#     )
     
 @router.post("/make-complaint", status_code=200, description="Make a complaint to the hall admin")
 async def make_complaint(input: MakeComplaintInput, db: db_dependency, current_student: current_student_dependency):
@@ -96,5 +102,6 @@ async def make_complaint(input: MakeComplaintInput, db: db_dependency, current_s
 async def get_complaints(db: db_dependency, current_student: current_student_dependency):
     complaints = db.exec(select(Complaint).where(Complaint.hostel_student_id == current_student.id)).all()
     return ResponseData(
-       message="Student complaints fetched successfully" 
+       message="Student complaints fetched successfully" ,
+       data={"complaints": complaints}
     )

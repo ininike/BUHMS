@@ -7,7 +7,7 @@ from os import environ
 from datetime import timedelta
 from sqlmodel import SQLModel
 from dotenv import load_dotenv
-from routes import auth, test, rooms, students, devices
+from routes import auth, test, rooms, students, devices, complaints
 from redis import Redis
 
 load_dotenv()
@@ -57,3 +57,4 @@ app.include_router(test.router)
 app.include_router(rooms.router)
 app.include_router(students.router)
 app.include_router(devices.router)
+app.include_router(complaints.router)

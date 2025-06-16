@@ -87,7 +87,7 @@ class HostelStudent (SQLModel, table=True):
     time_checked_out: Optional[datetime]
     
     hostel: Hostel = Relationship(back_populates="semester_students")
-    student: Student = Relationship(back_populates="semester_hostel")
+    student: Student = Relationship(back_populates="semester_hostels")
     room: Optional[Room] = Relationship(back_populates="semester_students")
     semester: AcademicSemester = Relationship(back_populates="hostel_students")
     semester_devices: List["Device"] = Relationship(back_populates="hostel_student")
@@ -107,7 +107,7 @@ class Device(SQLModel, table=True):
     date_removed: Optional[datetime]
     room_student_id: int = Field(foreign_key="hostels_students.id")
     
-    hostel_student: Student = Relationship(back_populates="semester_devices")
+    hostel_student: HostelStudent = Relationship(back_populates="semester_devices")
     
 class Announcement(SQLModel, table=True):
     __tablename__ = "announcements"
