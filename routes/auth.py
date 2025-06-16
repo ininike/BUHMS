@@ -26,8 +26,6 @@ def has_registered(student: Student) -> HostelStudent | None:
 def verify_login (username: str, password: str, db, user_type: str):
     if user_type == 'student':
         user = db.exec(select(Student).where(Student.matric_no == username)).first()
-    elif user_type == 'porter':
-        user = db.exec(select(HallPorter).where(HallPorter.email == username)).first()
     elif user_type == 'admin':
         user = db.exec(select(HallAdmin).where(HallAdmin.email == username)).first()
     
@@ -62,21 +60,12 @@ async def login(input: login_form_dependency, db: db_dependency, Authorize: Auth
         isPaid=bool(student_hostel)
     )
 
-@router.post("/porter-login", status_code=status.HTTP_200_OK, description="authenticate a porter and return an access token", response_model=ResponseData)
-async def login(input: login_form_dependency, db: db_dependency, Authorize: AuthJWT = Depends()):
-    porter = verify_login(input.username, input.password, db, 'porter')
-    if porter is None:
-        return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"message": "Invalid username or password"})
-    access_token = Authorize.create_access_token(subject=porter.id, user_claims={'user_type': 'porter'})
-    Authorize.set_access_cookies(access_token)
-    return ResponseData(message="Login successful")
-
 @router.post("/admin-login", status_code=status.HTTP_200_OK, description="authenticate an admin and return an access token", response_model=ResponseData)
 async def login(input: login_form_dependency, db: db_dependency, Authorize: AuthJWT = Depends()):
     admin = verify_login(input.username, input.password, db, 'admin')
     if admin is None:
         return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"message": "Invalid username or password"})
-    access_token = Authorize.create_access_token(subject=admin.id, user_claims={'user_type': 'admin'})
+    access_token = Authorize.create_access_token(subject=admin.id, user_claims={'user_type': admin.type })
     Authorize.set_access_cookies(access_token)
     return ResponseData(message="Login successful")
 

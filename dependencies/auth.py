@@ -23,8 +23,6 @@ def authenticate_user(Authorize: AuthJWT = Depends(), user_type: str = None):
 def validate_user(user_id: int, db: db_dependency, user_type: str):
     if user_type == 'student':
         user = db.get(HostelStudent, user_id)
-    elif user_type == 'porter':
-        user = db.get(HallPorter, user_id)
     elif user_type == 'admin':
         user = db.get(HallAdmin, user_id)
     
@@ -39,13 +37,6 @@ def get_current_student(db: db_dependency, Authorize: AuthJWT = Depends()):
     return student
 
 current_student_dependency = Annotated[HostelStudent, Depends(get_current_student)]
-
-def get_current_porter(db: db_dependency, Authorize: AuthJWT = Depends()):
-    user_id = authenticate_user(Authorize, user_type='porter')
-    porter = validate_user(user_id, db, user_type='porter')
-    return porter
-
-current_porter_dependency = Annotated[HallPorter, Depends(get_current_porter)]
 
 def get_current_admin(db: db_dependency, Authorize: AuthJWT = Depends()):
     user_id = authenticate_user(Authorize, user_type='admin')
