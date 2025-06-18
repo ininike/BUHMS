@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status, Depends, Response
 from fastapi.responses import JSONResponse
-from models.database_models import Student, HallPorter, HallAdmin, HostelStudent, AcademicSemester
+from models.database_models import Student, HallAdmin, HostelStudent, AcademicSemester
 from models.auth import LoginResponse
 from models.response import ResponseData
 from fastapi_jwt_auth import AuthJWT

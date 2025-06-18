@@ -6,7 +6,7 @@ from models.input import SelectRoomInput, AddDeviceInput, ReadAnnouncementInput,
 from sqlmodel import select
 from dependencies.db import db_dependency
 from dependencies.auth import current_student_dependency
-from models.database_models import Student, Hostel, HallPorter, HallAdmin, HostelStudent, Room, Device, Announcement, Complaint, AnnouncementRead
+from models.database_models import Student, Hostel, HallAdmin, HostelStudent, Room, Device, Announcement, Complaint, AnnouncementRead
 from datetime import datetime
 
 router = APIRouter(

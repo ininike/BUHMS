@@ -2,7 +2,7 @@ from fastapi import status, Depends
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer,OAuth2PasswordRequestForm
 from fastapi_jwt_auth import AuthJWT
-from models.database_models import HostelStudent, HallPorter, HallAdmin
+from models.database_models import HostelStudent, HallAdmin
 from typing import Annotated
 from .db import db_dependency
 from dotenv import load_dotenv

@@ -4,7 +4,7 @@ from fastapi_jwt_auth import AuthJWT
 from models.response import ResponseData
 from sqlmodel import select
 from dependencies.db import db_dependency
-from models.database_models import Student, HallPorter, HallAdmin, HostelStudent, Room, Hostel
+from models.database_models import Student, HallAdmin, HostelStudent, Room, Hostel
 
 router = APIRouter(
     tags =['test'],
