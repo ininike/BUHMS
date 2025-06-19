@@ -11,7 +11,7 @@ from datetime import datetime
 
 router = APIRouter(
     tags=["students"],
-    prefix="/student"
+    prefix="/students"
 )
 
 @router.post("/select-room", status_code=200, description="handles student room selection/changing")
@@ -33,7 +33,7 @@ async def get_student_devices(db: db_dependency, current_student: current_studen
         data={"devices": devices}
     )
     
-@router.get("/device/{device_id}", status_code=200, description="Get a specific device")
+@router.get("/devices/{device_id}", status_code=200, description="Get a specific device")
 async def get_device(device_id: int, db: db_dependency, current_student: current_student_dependency):
     device = db.get(Device, device_id)
     if not device:
@@ -45,7 +45,7 @@ async def get_device(device_id: int, db: db_dependency, current_student: current
         data={"device": device}
     )
 
-@router.post("/register-device", status_code=201, description="Register a new device for a student")
+@router.post("/register-device", status_code=200, description="Register a new device for a student")
 async def register_device(input: AddDeviceInput, db: db_dependency, current_student: current_student_dependency):
     device = Device(type=input.type,name=input.name,photo=input.photo,color=input.color,unique_code=input.unique_code, room_student_id=current_student.id)
     db.add(device)
@@ -85,24 +85,27 @@ async def get_merit_points(db: db_dependency, current_student: current_student_d
 @router.get("/announcements", status_code=200, description="Get the announcements for current student's hostels")
 async def get_announcements(db: db_dependency, current_student: current_student_dependency):
     current_semester = current_student.academic_semester_id
-    announcements = db.exec(select(Announcement).where(Announcement.academic_semester_id == current_semester).order_by(Announcement.time_created)).all()
+    announcements = db.exec(select(Announcement).where(Announcement.semester_id == current_semester).order_by(Announcement.time_created)).all()
     read_announcements = db.exec(select(AnnouncementRead).where(
         AnnouncementRead.hostel_student_id == current_student.id
     )).all()
     for announcement in announcements:
+        announcement = announcement.__dict__
         announcement['is_read'] = any(read.announcement_id == announcement.id for read in read_announcements)
     return ResponseData(
         message="Successfully retrieved notice board announcements",
         data={"announcements": announcements}
     )
 
-@router.get("/announcement/{announcement_id}", status_code=200, description="Mark an annoucements as read")
+@router.get("/announcements/{announcement_id}", status_code=200, description="Mark an annoucements as read")
 async def read_announcement(announcement_id: int, db:db_dependency, current_student: current_student_dependency):
     announcement = db.get(Announcement, announcement_id)
     if not announcement:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": "Announcement not found"})
     if announcement.hostel_id != current_student.hostel_id:
         return JSONResponse(status_code=status.HTTP_403_FORBIDDEN, content={"message": "You do not have permission to read this announcement"})
+    if announcement.semester_id != current_student.academic_semester_id:
+        return JSONResponse(status_code=status.HTTP_403_FORBIDDEN, content={"message": "This announcement is not for your current semester"})
     existing_read = db.exec(select(AnnouncementRead).where(
         AnnouncementRead.announcement_id == announcement_id,
         AnnouncementRead.hostel_student_id == current_student.id
@@ -113,7 +116,7 @@ async def read_announcement(announcement_id: int, db:db_dependency, current_stud
        db.commit()
     return ResponseData(
         message="Annoucement retrieved successfully",
-        data = {"announcement": announcement}
+        data = {"announcement": announcement.__dict__}
     )
     
 
@@ -125,7 +128,6 @@ async def make_complaint(input: MakeComplaintInput, db: db_dependency, current_s
     db.commit()
     return ResponseData(
         message="Complaint made successfully", 
-        data={"complaint": complaint}
     )
     
 @router.get("/close-complaint/{complaint_id}", status_code=200, description="Close a complaint")
@@ -141,7 +143,6 @@ async def close_complaint(complaint_id: int, db: db_dependency, current_student:
     db.refresh(complaint)
     return ResponseData(
         message="Complaint closed successfully",
-        data={"complaint": complaint}
     )
     
 @router.delete("/withdraw-complaint/{complaint_id}", status_code=200, description="Withdraw a complaint")
@@ -173,7 +174,6 @@ async def edit_complaint(complaint_id: int, input: MakeComplaintInput, db: db_de
     db.commit()
     return ResponseData(
         message="Complaint edited successfully",
-        data={"complaint": complaint}
     )
 
     
@@ -185,7 +185,7 @@ async def get_complaints(db: db_dependency, current_student: current_student_dep
        data={"complaints": complaints}
     )
     
-@router.get("complaint/{complaint_id}", status_code=200, description="View a specific complaint")
+@router.get("/complaints/{complaint_id}", status_code=200, description="View a specific complaint")
 async def get_complaint(complaint_id: int, db: db_dependency, current_student: current_student_dependency):
     complaint = db.get(Complaint, complaint_id)
     if not complaint:

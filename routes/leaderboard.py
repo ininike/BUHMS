@@ -22,14 +22,22 @@ async def get_leaderboard(db: db_dependency, Authorize: AuthJWT = Depends()):
     leaderboard = []
     rooms = [ room.__dict__ for room in rooms ]  # Convert Room objects to dicts for easier acces
     students = [student.__dict__ for student in students]  # Convert HostelStudent objects to dicts for easier access
+    print(students)
+    student_ids = [student['student_id'] for student in students]
+    student_names = db.exec(select(Student).where(Student.id.in_(student_ids))).all()
+    student_names = [s.__dict__ for s in student_names]  # Convert Student objects to dicts for easier access
+    print("Student names:", student_names)
+    for student in students:
+        student['name'] = next((s['student_name'] for s in student_names if s['id'] == student['student_id']), "Unknown")
+        student['matric_no'] = next((s['matric_no'] for s in student_names if s['id'] == student['student_id']), "Unknown")
     for room in rooms:
         room_students = [student for student in students if student['room_id'] == room['id']]
         if room_students:
             leaderboard.append({
-                'room': room.name,
+                'room_number': room['room_number'],
                 'students': [{
-                    'name': student['student'].name,
-                    'matric_no': student['student'].matric_no,
+                    'name': student['name'],
+                    'matric_no': student['matric_no'],
                     'merit_points': student['merit_points'],
                     } for student in room_students],
             })

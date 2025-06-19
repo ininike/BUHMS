@@ -36,6 +36,8 @@ class HallAdmin (SQLModel, table=True):
     type: str
     
     hostel: Hostel = Relationship(back_populates="admin")
+    announcements: List["Announcement"] = Relationship(back_populates="admin")
+    complaints_commented: List["Complaint"] = Relationship(back_populates="admin")
     
 class Room (SQLModel, table=True):
     __tablename__ = "rooms"
@@ -105,13 +107,14 @@ class Announcement(SQLModel, table=True):
     title: Optional[str]
     content: str
     time_created: datetime
-    admin_id: str
+    admin_id: int = Field(foreign_key="admins.id")
     hostel_id: int = Field(foreign_key="hostels.id")
-    academic_semester_id: int = Field(foreign_key="academic_semesters.id")
+    semester_id: int = Field(foreign_key="academic_semesters.id")
     
     hostel: Hostel = Relationship(back_populates="announcements")
     semester: AcademicSemester = Relationship(back_populates="announcements")
     reads: List["AnnouncementRead"] = Relationship(back_populates="announcement")
+    admin: HallAdmin = Relationship(back_populates="announcements")
     
 class Complaint(SQLModel, table=True):
     __tablename__ = "complaints"
@@ -119,11 +122,13 @@ class Complaint(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     hostel_student_id: int = Field(foreign_key="hostels_students.id")
     content: str
-    created_at: datetime = Field(default=None)
+    time_created: datetime = Field(default=datetime.now())
     status: str = Field(default="pending")  # pending, resolved, rejected
     comment: Optional[str] = None  # Admin's comment on the complaint
+    comment_by : Optional[int] = Field(default=None, foreign_key="admins.id")  # Admin who commented on the complaint
     
     hostel_student: HostelStudent = Relationship(back_populates="complaints")
+    admin: Optional[HallAdmin] = Relationship(back_populates="complaints_commented")
     
 class AnnouncementRead(SQLModel, table=True):
     __tablename__ = "announcements_reads"

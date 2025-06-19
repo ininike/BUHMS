@@ -4,6 +4,7 @@ from models.database_models import Student, HallAdmin, HostelStudent, AcademicSe
 from models.auth import LoginResponse
 from models.response import ResponseData
 from fastapi_jwt_auth import AuthJWT
+# from fastapi_jwt_auth.exceptions import 
 from sqlmodel import select 
 from dependencies.db import db_dependency
 from dependencies.auth import login_form_dependency
